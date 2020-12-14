@@ -1,5 +1,3 @@
-<> # rsv2ce [![AUR](https://img.shields.io/badge/AUR-rsv2ce--git-blue.svg)](https://aur.archlinux.org/packages/rsv2ce-git/)
-
 Read the Word of God from your terminal
 
 ## Usage
