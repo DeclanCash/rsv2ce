@@ -4,19 +4,19 @@ typedef struct {
     int number;
     char *name;
     char *abbr;
-} kjv_book;
+} rsv2ce_book;
 
 typedef struct {
     int book;
     int chapter;
     int verse;
     char *text;
-} kjv_verse;
+} rsv2ce_verse;
 
-extern kjv_verse kjv_verses[];
+extern rsv2ce_verse rsv2ce_verses[];
 
-extern int kjv_verses_length;
+extern int rsv2ce_verses_length;
 
-extern kjv_book kjv_books[];
+extern rsv2ce_book rsv2ce_books[];
 
-extern int kjv_books_length;
+extern int rsv2ce_books_length;

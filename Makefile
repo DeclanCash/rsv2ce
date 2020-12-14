@@ -1,15 +1,15 @@
-OBJS = src/kjv.o \
+OBJS = src/rsv2ce.o \
        src/intset.o \
        data/data.o
 CFLAGS += -Wall -Isrc/
 LDLIBS += -lreadline
 
-kjv: $(OBJS)
+rsv2ce: $(OBJS)
 	$(CC) -o $@ $(LDFLAGS) $(OBJS) $(LDLIBS)
 
-data/data.c: data/kjv.tsv data/generate.awk src/data.h
+data/data.c: data/rsv2ce.tsv data/generate.awk src/data.h
 	awk -f data/generate.awk $< > $@
 
 .PHONY: clean
 clean:
-	rm -rf $(OBJS) kjv
+	rm -rf $(OBJS) rsv2ce

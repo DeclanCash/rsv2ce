@@ -1,5 +1,5 @@
 /*
-kjv: Read the Word of God from your terminal
+rsv2ce: Read the Word of God from your terminal
 
 License: Public domain
 */
@@ -28,15 +28,15 @@ typedef struct {
     int context_before;
     int context_after;
     bool context_chapter;
-} kjv_config;
+} rsv2ce_config;
 
-#define KJV_REF_SEARCH 1
-#define KJV_REF_EXACT 2
-#define KJV_REF_EXACT_SET 3
-#define KJV_REF_RANGE 4
-#define KJV_REF_RANGE_EXT 5
+#define RSV2CE_REF_SEARCH 1
+#define RSV2CE_REF_EXACT 2
+#define RSV2CE_REF_EXACT_SET 3
+#define RSV2CE_REF_RANGE 4
+#define RSV2CE_REF_RANGE_EXT 5
 
-typedef struct kjv_ref {
+typedef struct rsv2ce_ref {
     int type;
     unsigned int book;
     unsigned int chapter;
@@ -46,16 +46,16 @@ typedef struct kjv_ref {
     intset *verse_set;
     char *search_str;
     regex_t search;
-} kjv_ref;
+} rsv2ce_ref;
 
-static kjv_ref *
-kjv_newref()
+static rsv2ce_ref *
+rsv2ce_newref()
 {
-    return calloc(1, sizeof(kjv_ref));
+    return calloc(1, sizeof(rsv2ce_ref));
 }
 
 static void
-kjv_freeref(kjv_ref *ref)
+rsv2ce_freeref(rsv2ce_ref *ref)
 {
     if (ref) {
         free(ref->search_str);
@@ -66,7 +66,7 @@ kjv_freeref(kjv_ref *ref)
 
 
 static bool
-kjv_bookequal(const char *a, const char *b, bool short_match)
+rsv2ce_bookequal(const char *a, const char *b, bool short_match)
 {
     for (size_t i = 0, j = 0; ; ) {
         if ((!a[i] && !b[j]) || (short_match && !b[j])) {
@@ -85,19 +85,19 @@ kjv_bookequal(const char *a, const char *b, bool short_match)
 }
 
 static bool
-kjv_book_matches(const kjv_book *book, const char *s)
+rsv2ce_book_matches(const rsv2ce_book *book, const char *s)
 {
-    return kjv_bookequal(book->name, s, false) ||
-        kjv_bookequal(book->abbr, s, false) ||
-        kjv_bookequal(book->name, s, true);
+    return rsv2ce_bookequal(book->name, s, false) ||
+        rsv2ce_bookequal(book->abbr, s, false) ||
+        rsv2ce_bookequal(book->name, s, true);
 }
 
 static int
-kjv_book_fromname(const char *s)
+rsv2ce_book_fromname(const char *s)
 {
-    for (int i = 0; i < kjv_books_length; i++) {
-        const kjv_book *book = &kjv_books[i];
-        if (kjv_book_matches(book, s)) {
+    for (int i = 0; i < rsv2ce_books_length; i++) {
+        const rsv2ce_book *book = &rsv2ce_books[i];
+        if (rsv2ce_book_matches(book, s)) {
             return book->number;
         }
     }
@@ -105,7 +105,7 @@ kjv_book_fromname(const char *s)
 }
 
 static int
-kjv_scanbook(const char *s, int *n)
+rsv2ce_scanbook(const char *s, int *n)
 {
     int i;
     int mode = 0;
@@ -125,7 +125,7 @@ kjv_scanbook(const char *s, int *n)
 }
 
 static int
-kjv_parseref(kjv_ref *ref, const char *ref_str)
+rsv2ce_parseref(rsv2ce_ref *ref, const char *ref_str)
 {
     // 1. <book>
     // 2. <book>:?<chapter>
@@ -151,10 +151,10 @@ kjv_parseref(kjv_ref *ref, const char *ref_str)
     regfree(&ref->search);
 
     int n = 0;
-    if (kjv_scanbook(ref_str, &n) == 1) {
+    if (rsv2ce_scanbook(ref_str, &n) == 1) {
         // 1, 2, 3, 3a, 4, 5, 6, 8, 9
         char *bookname = strndup(ref_str, n);
-        ref->book = kjv_book_fromname(bookname);
+        ref->book = rsv2ce_book_fromname(bookname);
         free(bookname);
         ref_str = &ref_str[n];
     } else if (ref_str[0] == '/') {
@@ -172,7 +172,7 @@ kjv_parseref(kjv_ref *ref, const char *ref_str)
         goto search;
     } else if (ref_str[0] == '\0') {
         // 1
-        ref->type = KJV_REF_EXACT;
+        ref->type = RSV2CE_REF_EXACT;
         return 0;
     } else {
         return 1;
@@ -186,14 +186,14 @@ kjv_parseref(kjv_ref *ref, const char *ref_str)
         if (ref_str[n] != '\0') {
             return 1;
         }
-        ref->type = KJV_REF_RANGE;
+        ref->type = RSV2CE_REF_RANGE;
         return 0;
     } else if (ref_str[0] == '/') {
         // 9
         goto search;
     } else if (ref_str[0] == '\0') {
         // 2
-        ref->type = KJV_REF_EXACT;
+        ref->type = RSV2CE_REF_EXACT;
         return 0;
     } else {
         return 1;
@@ -204,7 +204,7 @@ kjv_parseref(kjv_ref *ref, const char *ref_str)
     if (ret == 1 && ref_str[n] == '\0') {
         // 5
         ref->verse_end = value;
-        ref->type = KJV_REF_RANGE;
+        ref->type = RSV2CE_REF_RANGE;
         return 0;
     } else if (ret == 1) {
         // 6
@@ -212,7 +212,7 @@ kjv_parseref(kjv_ref *ref, const char *ref_str)
         ref_str = &ref_str[n];
     } else if (ref_str[0] == '\0') {
         // 3
-        ref->type = KJV_REF_EXACT;
+        ref->type = RSV2CE_REF_EXACT;
         return 0;
     } else if (sscanf(ref_str, ",%u%n", &value, &n) == 1) {
         // 3a
@@ -230,7 +230,7 @@ kjv_parseref(kjv_ref *ref, const char *ref_str)
         if (ref_str[0] != '\0') {
             return 1;
         }
-        ref->type = KJV_REF_EXACT_SET;
+        ref->type = RSV2CE_REF_EXACT_SET;
         return 0;
     } else {
         return 1;
@@ -238,14 +238,14 @@ kjv_parseref(kjv_ref *ref, const char *ref_str)
 
     if (sscanf(ref_str, ":%u%n", &ref->verse_end, &n) == 1 && ref_str[n] == '\0') {
         // 6
-        ref->type = KJV_REF_RANGE_EXT;
+        ref->type = RSV2CE_REF_RANGE_EXT;
         return 0;
     } else {
         return 1;
     }
 
 search:
-    ref->type = KJV_REF_SEARCH;
+    ref->type = RSV2CE_REF_SEARCH;
     if (regcomp(&ref->search, &ref_str[1], REG_EXTENDED|REG_ICASE|REG_NOSUB) != 0) {
         return 2;
     }
@@ -275,32 +275,32 @@ str_join(size_t n, char *strs[])
 }
 
 static bool
-kjv_verse_matches(const kjv_ref *ref, const kjv_verse *verse)
+rsv2ce_verse_matches(const rsv2ce_ref *ref, const rsv2ce_verse *verse)
 {
     switch (ref->type) {
-        case KJV_REF_SEARCH:
+        case RSV2CE_REF_SEARCH:
             return (ref->book == 0 || ref->book == verse->book) &&
                 (ref->chapter == 0 || verse->chapter == ref->chapter) &&
                 regexec(&ref->search, verse->text, 0, NULL, 0) == 0;
 
-        case KJV_REF_EXACT:
+        case RSV2CE_REF_EXACT:
             return ref->book == verse->book &&
                 (ref->chapter == 0 || ref->chapter == verse->chapter) &&
                 (ref->verse == 0 || ref->verse == verse->verse);
 
-        case KJV_REF_EXACT_SET:
+        case RSV2CE_REF_EXACT_SET:
             return ref->book == verse->book &&
                 (ref->chapter == 0 || verse->chapter == ref->chapter) &&
                 intset_contains(ref->verse_set, verse->verse);
 
-        case KJV_REF_RANGE:
+        case RSV2CE_REF_RANGE:
             return ref->book == verse->book &&
                 ((ref->chapter_end == 0 && ref->chapter == verse->chapter) ||
                     (verse->chapter >= ref->chapter && verse->chapter <= ref->chapter_end)) &&
                 (ref->verse == 0 || verse->verse >= ref->verse) &&
                 (ref->verse_end == 0 || verse->verse <= ref->verse_end);
 
-        case KJV_REF_RANGE_EXT:
+        case RSV2CE_REF_RANGE_EXT:
             return ref->book == verse->book &&
                 (
                     (verse->chapter == ref->chapter && verse->verse >= ref->verse && ref->chapter != ref->chapter_end) ||
@@ -314,23 +314,23 @@ kjv_verse_matches(const kjv_ref *ref, const kjv_verse *verse)
     }
 }
 
-#define KJV_DIRECTION_BEFORE -1
-#define KJV_DIRECTION_AFTER 1
+#define RSV2CE_DIRECTION_BEFORE -1
+#define RSV2CE_DIRECTION_AFTER 1
 
 static int
-kjv_chapter_bounds(int i, int direction, int maximum_steps)
+rsv2ce_chapter_bounds(int i, int direction, int maximum_steps)
 {
     assert(direction == -1 || direction == 1);
 
     int steps = 0;
-    for ( ; 0 <= i && i < kjv_verses_length; i += direction) {
+    for ( ; 0 <= i && i < rsv2ce_verses_length; i += direction) {
         if (maximum_steps != -1 && steps >= maximum_steps) {
             break;
         }
-        if ((direction == -1 && i == 0) || (direction == 1 && i + 1 == kjv_verses_length)) {
+        if ((direction == -1 && i == 0) || (direction == 1 && i + 1 == rsv2ce_verses_length)) {
             break;
         }
-        const kjv_verse *current = &kjv_verses[i], *next = &kjv_verses[i + direction];
+        const rsv2ce_verse *current = &rsv2ce_verses[i], *next = &rsv2ce_verses[i + direction];
         if (current->book != next->book || current->chapter != next->chapter) {
             break;
         }
@@ -340,11 +340,11 @@ kjv_chapter_bounds(int i, int direction, int maximum_steps)
 }
 
 static int
-kjv_next_match(const kjv_ref *ref, int i)
+rsv2ce_next_match(const rsv2ce_ref *ref, int i)
 {
-    for ( ; i < kjv_verses_length; i++) {
-        const kjv_verse *verse = &kjv_verses[i];
-        if (kjv_verse_matches(ref, verse)) {
+    for ( ; i < rsv2ce_verses_length; i++) {
+        const rsv2ce_verse *verse = &rsv2ce_verses[i];
+        if (rsv2ce_verse_matches(ref, verse)) {
             return i;
         }
     }
@@ -354,16 +354,16 @@ kjv_next_match(const kjv_ref *ref, int i)
 typedef struct {
     int start;
     int end;
-} kjv_range;
+} rsv2ce_range;
 
 typedef struct {
     int current;
     int next_match;
-    kjv_range matches[2];
-} kjv_next_data;
+    rsv2ce_range matches[2];
+} rsv2ce_next_data;
 
 static void
-kjv_next_addrange(kjv_next_data *next, kjv_range range) {
+rsv2ce_next_addrange(rsv2ce_next_data *next, rsv2ce_range range) {
     if (next->matches[0].start == -1 && next->matches[0].end == -1) {
         next->matches[0] = range;
     } else if (range.start < next->matches[0].end) {
@@ -374,28 +374,28 @@ kjv_next_addrange(kjv_next_data *next, kjv_range range) {
 }
 
 static int
-kjv_next_verse(const kjv_ref *ref, const kjv_config *config, kjv_next_data *next)
+rsv2ce_next_verse(const rsv2ce_ref *ref, const rsv2ce_config *config, rsv2ce_next_data *next)
 {
-    if (next->current >= kjv_verses_length) {
+    if (next->current >= rsv2ce_verses_length) {
         return -1;
     }
 
     if (next->matches[0].start != -1 && next->matches[0].end != -1 && next->current >= next->matches[0].end) {
         next->matches[0] = next->matches[1];
-        next->matches[1] = (kjv_range){-1, -1};
+        next->matches[1] = (rsv2ce_range){-1, -1};
     }
 
-    if ((next->next_match == -1 || next->next_match < next->current) && next->next_match < kjv_verses_length) {
-        int next_match = kjv_next_match(ref, next->current);
+    if ((next->next_match == -1 || next->next_match < next->current) && next->next_match < rsv2ce_verses_length) {
+        int next_match = rsv2ce_next_match(ref, next->current);
         if (next_match >= 0) {
             next->next_match = next_match;
-            kjv_range bounds = {
-                .start = kjv_chapter_bounds(next_match, KJV_DIRECTION_BEFORE, config->context_chapter ? -1 : config->context_before),
-                .end = kjv_chapter_bounds(next_match, KJV_DIRECTION_AFTER, config->context_chapter ? -1 : config->context_after) + 1,
+            rsv2ce_range bounds = {
+                .start = rsv2ce_chapter_bounds(next_match, RSV2CE_DIRECTION_BEFORE, config->context_chapter ? -1 : config->context_before),
+                .end = rsv2ce_chapter_bounds(next_match, RSV2CE_DIRECTION_AFTER, config->context_chapter ? -1 : config->context_after) + 1,
             };
-            kjv_next_addrange(next, bounds);
+            rsv2ce_next_addrange(next, bounds);
         } else {
-            next_match = kjv_verses_length;
+            next_match = rsv2ce_verses_length;
         }
     }
 
@@ -415,7 +415,7 @@ kjv_next_verse(const kjv_ref *ref, const kjv_config *config, kjv_next_data *next
 #define ESC_RESET "\033[m"
 
 static void
-kjv_output_verse(const kjv_verse *verse, FILE *f, const kjv_config *config)
+rsv2ce_output_verse(const rsv2ce_verse *verse, FILE *f, const rsv2ce_config *config)
 {
     fprintf(f, ESC_BOLD "%d:%d" ESC_RESET "\t", verse->chapter, verse->verse);
     char verse_text[1024];
@@ -440,9 +440,9 @@ kjv_output_verse(const kjv_verse *verse, FILE *f, const kjv_config *config)
 }
 
 static bool
-kjv_output(const kjv_ref *ref, FILE *f, const kjv_config *config)
+rsv2ce_output(const rsv2ce_ref *ref, FILE *f, const rsv2ce_config *config)
 {
-    kjv_next_data next = {
+    rsv2ce_next_data next = {
         .current = 0,
         .next_match = -1,
         .matches = {
@@ -451,23 +451,23 @@ kjv_output(const kjv_ref *ref, FILE *f, const kjv_config *config)
         },
     };
 
-    kjv_verse *last_printed = NULL;
-    for (int verse_id; (verse_id = kjv_next_verse(ref, config, &next)) != -1; ) {
-        kjv_verse *verse = &kjv_verses[verse_id];
+    rsv2ce_verse *last_printed = NULL;
+    for (int verse_id; (verse_id = rsv2ce_next_verse(ref, config, &next)) != -1; ) {
+        rsv2ce_verse *verse = &rsv2ce_verses[verse_id];
         if (last_printed == NULL || verse->book != last_printed->book) {
             if (last_printed != NULL) {
                 fprintf(f, "\n");
             }
-            fprintf(f, ESC_UNDERLINE "%s" ESC_RESET "\n\n", kjv_books[verse->book - 1].name);
+            fprintf(f, ESC_UNDERLINE "%s" ESC_RESET "\n\n", rsv2ce_books[verse->book - 1].name);
         }
-        kjv_output_verse(verse, f, config);
+        rsv2ce_output_verse(verse, f, config);
         last_printed = verse;
     }
     return last_printed != NULL;
 }
 
 static int
-kjv_render(const kjv_ref *ref, const kjv_config *config)
+rsv2ce_render(const rsv2ce_ref *ref, const rsv2ce_config *config)
 {
     int fds[2];
     if (pipe(fds) == -1) {
@@ -500,7 +500,7 @@ kjv_render(const kjv_ref *ref, const kjv_config *config)
     }
     close(fds[0]);
     FILE *output = fdopen(fds[1], "w");
-    bool printed = kjv_output(ref, output, config);
+    bool printed = rsv2ce_output(ref, output, config);
     if (!printed) {
         kill(pid, SIGTERM);
     }
@@ -513,7 +513,7 @@ kjv_render(const kjv_ref *ref, const kjv_config *config)
 }
 
 const char *
-usage = "usage: kjv [flags] [reference...]\n"
+usage = "usage: rsv2ce [flags] [reference...]\n"
     "\n"
     "Flags:\n"
     "  -A num  number of verses of context after matching verses\n"
@@ -546,7 +546,7 @@ usage = "usage: kjv [flags] [reference...]\n"
 int
 main(int argc, char *argv[])
 {
-    kjv_config config = {
+    rsv2ce_config config = {
         .maximum_line_length = 80,
 
         .context_before = 0,
@@ -563,14 +563,14 @@ main(int argc, char *argv[])
         case 'A':
             config.context_after = strtol(optarg, &endptr, 10);
             if (endptr[0] != '\0') {
-                fprintf(stderr, "kjv: invalid flag value for -A\n\n%s", usage);
+                fprintf(stderr, "rsv2ce: invalid flag value for -A\n\n%s", usage);
                 return 1;
             }
             break;
         case 'B':
             config.context_before = strtol(optarg, &endptr, 10);
             if (endptr[0] != '\0') {
-                fprintf(stderr, "kjv: invalid flag value for -B\n\n%s", usage);
+                fprintf(stderr, "rsv2ce: invalid flag value for -B\n\n%s", usage);
                 return 1;
             }
             break;
@@ -584,14 +584,14 @@ main(int argc, char *argv[])
             printf("%s", usage);
             return 0;
         case '?':
-            fprintf(stderr, "kjv: invalid flag -%c\n\n%s", optopt, usage);
+            fprintf(stderr, "rsv2ce: invalid flag -%c\n\n%s", optopt, usage);
             return 1;
         }
     }
 
     if (list_books) {
-        for (int i = 0; i < kjv_books_length; i++) {
-            kjv_book *book = &kjv_books[i];
+        for (int i = 0; i < rsv2ce_books_length; i++) {
+            rsv2ce_book *book = &rsv2ce_books[i];
             printf("%s (%s)\n", book->name, book->abbr);
         }
         return 0;
@@ -607,28 +607,28 @@ main(int argc, char *argv[])
     if (argc == optind) {
         using_history();
         while (true) {
-            char *input = readline("kjv> ");
+            char *input = readline("rsv2ce> ");
             if (input == NULL) {
                 break;
             }
             add_history(input);
-            kjv_ref *ref = kjv_newref();
-            int success = kjv_parseref(ref, input);
+            rsv2ce_ref *ref = rsv2ce_newref();
+            int success = rsv2ce_parseref(ref, input);
             free(input);
             if (success == 0) {
-                kjv_render(ref, &config);
+                rsv2ce_render(ref, &config);
             }
-            kjv_freeref(ref);
+            rsv2ce_freeref(ref);
         }
     } else {
         char *ref_str = str_join(argc-optind, &argv[optind]);
-        kjv_ref *ref = kjv_newref();
-        int success = kjv_parseref(ref, ref_str);
+        rsv2ce_ref *ref = rsv2ce_newref();
+        int success = rsv2ce_parseref(ref, ref_str);
         free(ref_str);
         if (success == 0) {
-            kjv_render(ref, &config);
+            rsv2ce_render(ref, &config);
         }
-        kjv_freeref(ref);
+        rsv2ce_freeref(ref);
     }
 
     return 0;

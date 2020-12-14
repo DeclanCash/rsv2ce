@@ -1,10 +1,10 @@
-# kjv [![AUR](https://img.shields.io/badge/AUR-kjv--git-blue.svg)](https://aur.archlinux.org/packages/kjv-git/)
+# rsv2ce [![AUR](https://img.shields.io/badge/AUR-rsv2ce--git-blue.svg)](https://aur.archlinux.org/packages/rsv2ce-git/)
 
 Read the Word of God from your terminal
 
 ## Usage
 
-    usage: kjv [flags] [reference...]
+    usage: rsv2ce [flags] [reference...]
 
     Flags:
       -A num  number of verses of context after matching verses
@@ -36,10 +36,10 @@ Read the Word of God from your terminal
 
 ## Build
 
-kjv can be built by cloning the repository and then running make:
+rsv2ce can be built by cloning the repository and then running make:
 
-    git clone https://github.com/bontibon/kjv.git
-    cd kjv
+    git clone https://github.com/DeclanCash/rsv2ce.git
+    cd rsv2ce
     make
 
 ## License
